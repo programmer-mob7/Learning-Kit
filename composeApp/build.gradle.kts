@@ -48,6 +48,7 @@ kotlin {
             implementation(libs.navigation.compose)
             implementation("network.chaintech:kmp-date-time-picker:1.0.5")
             implementation(libs.bundles.ktor)
+            implementation("io.ktor:ktor-client-logging:${"2.3.12"}")
 
             // Compose Multiplatform UI
             implementation(compose.runtime)
@@ -59,6 +60,8 @@ kotlin {
             implementation(project.dependencies.platform("io.insert-koin:koin-bom:4.1.1"))
             implementation("io.insert-koin:koin-core")
             implementation("io.insert-koin:koin-compose")
+
+            implementation(libs.napier)
 
 
         }

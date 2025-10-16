@@ -22,6 +22,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import org.koin.compose.koinInject
 import org.wangsit.learningkitcm.data.model.LogAction
 import org.wangsit.learningkitcm.data.model.SupplierAction
 import org.wangsit.learningkitcm.data.model.SupplierLocalDataSource
@@ -38,6 +40,7 @@ import org.wangsit.learningkitcm.data.model.SupplierLogDataSource
 import org.wangsit.learningkitcm.data.model.SupplierStatus
 import org.wangsit.learningkitcm.data.model.ToastType
 import org.wangsit.learningkitcm.data.source.network.model.response.SupplierItem
+import org.wangsit.learningkitcm.navigation.Screen
 import org.wangsit.learningkitcm.ui.component.ConfirmDialog
 import org.wangsit.learningkitcm.ui.screen.detail.DetailSupplier
 import org.wangsit.learningkitcm.ui.screen.home.HomeViewModel
@@ -51,7 +54,7 @@ fun StatusBottomSheet(
     navController: NavHostController,
     onShowMessage: (String, String) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: HomeViewModel = org.koin.compose.koinInject() // ✅ inject viewModel KMP
+    viewModel: HomeViewModel = koinInject()
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var selectedAction by remember { mutableStateOf<SupplierAction?>(null) }
@@ -243,31 +246,26 @@ fun StatusBottomSheet(
                 )
             }
 
-            SupplierAction.DELETE -> {}
-//            SupplierAction.DELETE -> {
-//                ConfirmDialog(
-//                    title = "Delete Supplier",
-//                    message = "${supplier.companyName} will be deleted. Are you sure?",
-//                    confirmText = "Delete",
-//                    icon = Icons.Default.Delete,
-//                    iconTint = Color.Red,
-//                    onConfirm = {
-//                        SupplierLocalDataSource.suppliers.removeAt(supplier.id) // Cara aman untuk remove
-//
-//                        // TAMBAHKAN LOG DI SINI
-//                        SupplierLogDataSource.addLog(
-//                            supplierId = supplier.id,
-//                            action = LogAction.DELETED,
-//                            description = "Supplier '${supplier.companyName}' was deleted from the system."
-//                        )
-//
-//                        onShowMessage("${supplier.companyName} Deleted", "error")
-//                        showDialog = false
-//                        onDismiss()
-//                    },
-//                    onDismiss = { showDialog = false }
-//                )
-//            }
+            SupplierAction.DELETE -> {
+                ConfirmDialog(
+                    title = "Delete Supplier",
+                    message = "${supplier.companyName} will be deleted. Are you sure?",
+                    confirmText = "Delete",
+                    icon = Icons.Default.Delete,
+                    iconTint = Color.Red,
+                    onConfirm = { supplier.id?.let { viewModel.deleteSupplierSingle(it) }
+                        SupplierLogDataSource.addLog(
+                            supplierId = supplier.id,
+                            action = LogAction.DELETED,
+                            description = "Supplier '${supplier.companyName}' was deleted from the system."
+                        )
+                        onShowMessage("${supplier.companyName} Deleted", "error")
+                        showDialog = false
+                        onDismiss()
+                    },
+                    onDismiss = { showDialog = false }
+                )
+            }
             null -> Unit
         }
     }

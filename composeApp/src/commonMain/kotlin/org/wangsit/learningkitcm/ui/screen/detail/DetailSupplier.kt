@@ -45,13 +45,8 @@ fun DetailSupplier(
             DetailRow(label = "PIC", value = supplier.id)
             DetailRow(label = "PIC", value = supplier.picName)
             DetailRow(label = "PIC Phone", value = supplier.picName)
-            //DetailRow(label = "PIC Email", value = supplier.picEmail)
             DetailRow(label = "Country", value = supplier.country)
             DetailRow(label = "State", value = supplier.state)
-            //DetailRow(label = "City", value = supplier.city)
-            //DetailRow(label = "ZIP Code", value = supplier.zip)
-            //DetailRow(label = "Company Phone", value = supplier.companyPhone)
-            //DetailRow(label = "Company Address", value = supplier.address)
         }
     }
 }

@@ -57,6 +57,7 @@ fun MainSupplierScreen(
     viewModel: HomeViewModel = koinInject()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val selectedIds by viewModel.selectedIds.collectAsState() // <-- new
 
     var selectedTab by remember { mutableStateOf("list") }
     var toast by remember { mutableStateOf<ToastType?>(null) }
@@ -68,17 +69,21 @@ fun MainSupplierScreen(
                 title = "Supplier",
                 canNavigateBack = false,
                 onNavigateUp = {},
-                //onSearchClick = {},
                 onFilterClick = { showFilterSheet = true },
                 onDownloadClick = {},
                 onLogClick = { navController.navigate(Screen.SupplierLog.route) },
-                onSearchTriggered = { keyword ->
-                    viewModel.searchSuppliers(keyword)
-                }
+                onSearchTriggered = { keyword -> viewModel.searchSuppliers(keyword) },
+
+                // 🔌 selection mode to topbar
+                selectionCount = selectedIds.size,
+                onDeleteSelected = { viewModel.deleteSuppliersBulk() },
+                onCancelSelection = { viewModel.clearSelection() }
             )
         },
         floatingActionButton = {
-            FABMain(onClick = { navController.navigate(Screen.SupplierCreate.route) })
+            if (selectedIds.isEmpty()) {
+                FABMain(onClick = { navController.navigate(Screen.SupplierCreate.route) })
+            }
         },
         modifier = Modifier.statusBarsPadding().navigationBarsPadding()
     ) { innerPadding ->
@@ -88,69 +93,45 @@ fun MainSupplierScreen(
                 .fillMaxSize()
                 .background(Color.White)
         ) {
-
-            if (!uiState.isLoading && uiState.suppliers.isEmpty()) {
-                Text(
-                    text = "Supplier not found",
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                SupplierList(
-                    suppliers = uiState.suppliers,
-                    onShowMessage = { _, _ ->  },
-                    navController = navController
-                    //isLoading = uiState.isLoading,
-                    //modifier = Modifier.fillMaxSize()
-                )
-            }
-
             Column {
                 SupplierNavigation(
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it }
                 )
 
-                when {
-                    // Kondisi 1: Loading
-                    uiState.isLoading -> {
-                        CircularProgressIndicator()
-                    }
-
-                    // Kondisi 2: Error
-                    uiState.errorMessage != null -> {
-                        Text(
-                            text = "Error: ${uiState.errorMessage}",
-                            color = Color.Red,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
-                    // Kondisi 3: Sukses, tapi datanya kosong (Ini yang Anda inginkan)
-                    uiState.suppliers.isEmpty() -> {
-                        if (selectedTab == "list") {
-                            Text(
-                                text = "Supplier not found",
-                                textAlign = TextAlign.Center,
-                            )
-                        } else {
-                            // Tampilkan pesan kosong untuk tab "Activities" jika perlu
-                            SupplierActivities()
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when {
+                        uiState.isLoading -> CircularProgressIndicator()
+                        uiState.errorMessage != null -> {
+                            Text(text = "Error: ${uiState.errorMessage}", color = Color.Red, textAlign = TextAlign.Center)
                         }
-                    }
-
-                    else -> when (selectedTab) {
-                        "list" -> SupplierList(
-                            suppliers = uiState.suppliers,
-                            onShowMessage = { msg, type ->
-                                toast = when (type) {
-                                    "success" -> ToastType.Success(msg)
-                                    "error" -> ToastType.Error(msg)
-                                    else -> ToastType.Success(msg)
-                                }
-                            },
-                            navController = navController
-                        )
-                        "activities" -> SupplierActivities()
+                        uiState.suppliers.isEmpty() -> {
+                            if (selectedTab == "list") Text("Supplier not found", textAlign = TextAlign.Center)
+                            else SupplierActivities()
+                        }
+                        else -> {
+                            when (selectedTab) {
+                                "list" -> SupplierList(
+                                    suppliers = uiState.suppliers,
+                                    onShowMessage = { msg, type ->
+                                        toast = when (type) {
+                                            "success" -> ToastType.Success(msg)
+                                            "error" -> ToastType.Error(msg)
+                                            else -> ToastType.Success(msg)
+                                        }
+                                    },
+                                    navController = navController,
+                                    // 🔌 oper state & callback untuk selection
+                                    selectedIds = selectedIds,
+                                    onToggleSelect = { id -> viewModel.toggleSelection(id) },
+                                    onDeleteSingle = { id -> viewModel.deleteSupplierSingle(id) }
+                                )
+                                "activities" -> SupplierActivities()
+                            }
+                        }
                     }
                 }
             }
@@ -161,10 +142,7 @@ fun MainSupplierScreen(
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 16.dp)
                 ) {
-                    SnackBarConfirmation(
-                        toast = toast,
-                        onDismiss = { toast = null }
-                    )
+                    SnackBarConfirmation(toast = toast, onDismiss = { toast = null })
                 }
             }
         }

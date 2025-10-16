@@ -8,6 +8,11 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 class HttpClientFactory {
+
+//    val client = HttpClient(CIO){
+//        install(Logging)
+//    }
+
     fun create(): HttpClient {
         return HttpClient() {
             install(ContentNegotiation) {
@@ -17,10 +22,9 @@ class HttpClientFactory {
                     isLenient = true
                 })
             }
-            // PERBAIKAN: Tambahkan blok timeout
             install(HttpTimeout) {
-                connectTimeoutMillis = 60000 // Waktu tunggu koneksi, naikkan jadi 60 detik
-                requestTimeoutMillis = 60000 // Waktu tunggu total request, naikkan jadi 60 detik
+                connectTimeoutMillis = 60000
+                requestTimeoutMillis = 60000
             }
         }
     }
